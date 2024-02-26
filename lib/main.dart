@@ -33,12 +33,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  // 循环一百个雪花
-  final List<SnowFlake> _snowFlake = List.generate(500, (index) => SnowFlake());
+  late int snowflakeNumber = 400;
+  late List<SnowFlake> _snowFlake =
+      List.generate(snowflakeNumber, (index) => SnowFlake());
 
   @override
   void initState() {
-    // TODO: implement initState
     _controller = AnimationController(
       duration: const Duration(seconds: 1),
       vsync: this,
@@ -48,9 +48,24 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   void dispose() {
-    // TODO: implement dispose
     _controller.dispose();
     super.dispose();
+  }
+
+  // 雪花增加
+  void snowflakeAdd() {
+    snowflakeNumber += 200;
+    _snowFlake = List.generate(snowflakeNumber, (index) => SnowFlake());
+    // print(snowflakeNumber);
+  }
+
+  // 雪花减少
+  void snowflakeRemove() {
+    if (snowflakeNumber - 200 >= 0) {
+      snowflakeNumber -= 200;
+      _snowFlake = List.generate(snowflakeNumber, (index) => SnowFlake());
+    }
+    // print(snowflakeNumber);
   }
 
   @override
@@ -64,26 +79,46 @@ class _MyHomePageState extends State<MyHomePage>
         child: Container(
           constraints: const BoxConstraints.expand(), // 设备屏幕有多大占多大
           decoration: const BoxDecoration(
-            // 背景渐变 blue -> white
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.blueAccent, Colors.white],
-            )
+              // 背景渐变 blue -> white
+              gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.blueAccent, Colors.white],
+          )),
+          child: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                top: 0,
+                right: 0,
+                bottom: 0,
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (BuildContext context, Widget? child) {
+                    _snowFlake.forEach((snow) => snow.fall());
+                    return CustomPaint(
+                      painter: MyPainter(_snowFlake),
+                    );
+                  },
+                ),
+              ),
+              Positioned(
+                  top: 100,
+                  left: 50,
+                  child: FloatingActionButton(
+                    onPressed: () => snowflakeAdd(),
+                    child: const Icon(Icons.add),
+                  )),
+              Positioned(
+                  top: 100,
+                  right: 50,
+                  child: FloatingActionButton(
+                    onPressed: () => snowflakeRemove(),
+                    child: const Icon(Icons.remove),
+                  )),
+            ],
           ),
-          child: AnimatedBuilder(
-              animation: _controller,
-              builder: (BuildContext context, Widget? child) {
-                _snowFlake.forEach((snow) => snow.fall());
-                return CustomPaint(
-                  painter: MyPainter(_snowFlake),
-                );
-              }),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.transgender_rounded),
       ),
     );
   }
@@ -137,7 +172,7 @@ class SnowFlake {
     y += velocity;
 
     // 雪花落地后回收打乱
-    if(y >= 800) {
+    if (y >= 800) {
       x = Random().nextDouble() * 500;
       y = 0;
       velocity = Random().nextDouble() * 4 + 2; // 雪花落下速度 4-6
